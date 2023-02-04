@@ -4,12 +4,13 @@ import xlwings as xw
 from datetime import date
 from calendar import monthrange
 from datetime import datetime
+import openpyxl
 
 
 class Reader:
 
     def __init__(self):
-        self.campains_dic = {}
+        self.campains_dic = []
         self.ws = xw.Book(self.get_file()).sheets['Sheet0']
         self.campains, self.lines = self.get_campains()
         self.budgets = self.get_values('E')
@@ -30,7 +31,7 @@ class Reader:
             campains.append(campain)
         line = 5
         while campain:
-            if self.ws.range(f"L{line}").value != 0:
+            if self.ws.range(f"J{line}").value != 0:
                 campain = self.ws.range(f"B{line}").value
                 campains.append(campain)
                 lines.append(line)
@@ -43,12 +44,26 @@ class Reader:
             ret.append(self.ws.range(f"{collum}{line}").value)
         return ret
 
+    def get_budgets(self, daily_bud):
+        year = int(datetime.now().strftime('%y'))
+        month = int(datetime.now().strftime('%m'))
+        num_days = monthrange(year, month)[1]  # num_days = 28
+
+        monthly_bud = num_days * daily_bud
+        weekly_bud = 7 * daily_bud
+        return monthly_bud, weekly_bud
+
     def campains_creator(self):
         ind = 0
+        print(self.lids)
         for campain in self.campains:
-            self.campains_dic[campain] = [self.budgets[ind], self.prices[ind], self.lids[ind]]
+            monthly_bud, weekly_bud = self.get_budgets(self.budgets[ind])
+            bud_usage = weekly_bud / self.prices[ind]
+            price_for_lid = '--'
+            if self.lids[ind] != 0:
+                price_for_lid = self.prices[ind] / self.lids[ind]
+            self.campains_dic.append((campain, monthly_bud, weekly_bud, bud_usage, self.budgets[ind], self.prices[ind], self.lids[ind], price_for_lid))
             ind += 1
-        print(self.campains_dic)
 
 
 def add_campain(daily_bud, price, lids):
@@ -69,12 +84,26 @@ def get_budgets(daily_bud):
     weekly_bud = 7 * daily_bud
     return monthly_bud, weekly_bud
 
-def formater():
-    pass
+
+def formater(lst):
+    headers = ("קמפיין", "תקציב חודשי", "תקציב לתקופה", "ניצול תקציב", "תקציב יומי", "עלות", "תוצאה", "עלות לתוצאה")
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    data = [headers]
+    for tup in lst:
+        data.append(tup)
+    data = tuple(data)
+
+    for i in data:
+        ws.append(i)
+    wb.save('C:\lemesh\output.xlsx')
+
 
 if __name__ == '__main__':
 
-    Reader()
+    r = Reader()
+    lines = r.campains_dic
+    formater(lines)
 
 
 
