@@ -18,7 +18,6 @@ class Reader:
         self.lids = self.get_values('K')
         self.campains_creator()
 
-
     def get_file(self):
         today = date.today().strftime("%d-%m-%Y")
         return f"C:\\Users\\tamir\Downloads\\{today}doh.xlsx"
@@ -58,21 +57,12 @@ class Reader:
         print(self.lids)
         for campain in self.campains:
             monthly_bud, weekly_bud = self.get_budgets(self.budgets[ind])
-            bud_usage = weekly_bud / self.prices[ind]
+            bud_usage = str(int((weekly_bud / self.prices[ind]) * 100)) + "%"
             price_for_lid = '--'
             if self.lids[ind] != 0:
                 price_for_lid = self.prices[ind] / self.lids[ind]
             self.campains_dic.append((campain, monthly_bud, weekly_bud, bud_usage, self.budgets[ind], self.prices[ind], self.lids[ind], price_for_lid))
             ind += 1
-
-
-def add_campain(daily_bud, price, lids):
-    today = date.today().strftime("%d-%m-%Y")
-    monthly_bud, weekly_bud = get_budgets(daily_bud)
-    budgets_usage = weekly_bud/price
-    price_for_lid = price / lids
-    with open(f"compare{today}", 'w+') as file:
-        pass
 
 
 def get_budgets(daily_bud):
@@ -85,11 +75,13 @@ def get_budgets(daily_bud):
     return monthly_bud, weekly_bud
 
 
-def formater(lst):
-    headers = ("קמפיין", "תקציב חודשי", "תקציב לתקופה", "ניצול תקציב", "תקציב יומי", "עלות", "תוצאה", "עלות לתוצאה")
+def writer(lst):
+    headers = ("קמפיין", "תקציב חודשי", "תקציב לתקופה", "ניצול תקציב", "תקציב יומי", "עלות", "תוצאה", "עלות לתוצאה",
+               "עלות קודמת לתוצאה", "שינוי")
     wb = openpyxl.Workbook()
     ws = wb.active
     data = [headers]
+
     for tup in lst:
         data.append(tup)
     data = tuple(data)
@@ -103,7 +95,7 @@ if __name__ == '__main__':
 
     r = Reader()
     lines = r.campains_dic
-    formater(lines)
+    writer(lines)
 
 
 
